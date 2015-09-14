@@ -92,10 +92,10 @@ module CombinePDF
 			object_streams = @parsed.select {|obj| obj.is_a?(Hash) && obj[:Type] == :ObjStm}
 			unless object_streams.empty?
 				warn "PDF 1.5 Object streams found - they are not fully supported! attempting to extract objects."
-				
+
 				object_streams.each do |o|
 					## un-encode (using the correct filter) the object streams
-					PDFFilter.inflate_object o 
+					PDFFilter.inflate_object o
 					## extract objects from stream to top level arry @parsed
 					@scanner = StringScanner.new o[:raw_stream_content]
 					stream_data = _parse_
@@ -113,7 +113,7 @@ module CombinePDF
 				end
 			end
 
-			
+
 			# serialize_objects_and_references.catalog_pages
 
 			# Benchmark.bm do |bm|
@@ -178,8 +178,7 @@ module CombinePDF
 					raise "Parsing Error: PDF file error - a stream object wasn't properly colsed using 'endstream'!" unless str
 					# need to remove end of stream
 					if out.last.is_a? Hash
-						out.last[:raw_stream_content] = str[0...-10] #cuts only one EON char (\n or \r)
-						# out.last[:raw_stream_content] = str.gsub(/[\n\r]?[\n\r]?endstream/, "")
+				    out.last[:raw_stream_content] = str.sub(/(\n\r|\r\n|\n|\r)?endstream$/, '')
 					else
 						warn "Stream not attached to dictionary!"
 						out << str[0...-10].force_encoding(Encoding::ASCII_8BIT)
@@ -327,13 +326,13 @@ module CombinePDF
 						if @scanner.skip_until(/<</)
 							data = _parse_
 							@root_object ||= {}
-							@root_object[data.shift] = data.shift while data[0]						
+							@root_object[data.shift] = data.shift while data[0]
 						end
 						##########
 						## skip untill end of segment, maked by %%EOF
 						@scanner.skip_until(/\%\%EOF/)
 					end
-					
+
 				when @scanner.scan(/[\s]+/)
 					# Generally, do nothing
 					nil
@@ -355,7 +354,7 @@ module CombinePDF
 						out << keep.pop
 					end
 				else
-					# always advance 
+					# always advance
 					# warn "Advnacing for unknown reason..."
 					@scanner.pos = @scanner.pos + 1
 				end
@@ -381,7 +380,7 @@ module CombinePDF
 
 				raise "Unknown error - parsed data doesn't contain a cataloged object!" unless catalogs
 			end
-			case 
+			case
 			when catalogs.is_a?(Array)
 				catalogs.each {|c| catalog_pages(c, secure_injection, inheritance_hash ) unless c.nil?}
 			when catalogs.is_a?(Hash)
